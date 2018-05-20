@@ -1,0 +1,6 @@
+{
+  "user_id": "your_user_id",
+  "user_passworsd": "your_password",
+  "url": "http://example.com",
+  "dir": "./code/"
+}

@@ -6,25 +6,12 @@ import time
 import requests
 import re
 import codecs
-from xml.sax.saxutils import unescape
+import json
 
-# 账号
-user_id = ""
-
-# 密码
-user_passworsd = ""
-
-# OJ网址
-url = ""
-
-# 存放代码的文件夹
-dir = "./code/"
 
 # 每次下载的间隔时间0.1秒，这个时间间隔请根据具体情况灵活调整
 interva_time = 0.1
 
-url_login = url + "/login.php"
-url_userinfo = url + "/userinfo.php?user=" + user_id
 
 headers = {"Accept": "text/html,application/xhtml+xml,application/xml;",
            "Accept-Encoding": "gzip",
@@ -42,7 +29,8 @@ pattern_sid = "<tr class='evenrow'><td>(\d+)</td>"
 pattern_code = '<pre class="brush:c\+\+;">(.*)</pre>'
 
 
-def login():
+def login(url_login,user_id,user_passworsd):
+
     res = requests.post(url_login, data={"user_id": user_id, "password": user_passworsd}, headers=headers)
     return res.cookies.get_dict()
 
@@ -102,15 +90,24 @@ class ShowProcess():
 
 
 def main():
+    # 读取配置
+    config = json.load(open("config.json","r"))
+    user_id = config["user_id"]
+    user_password = config["user_passworsd"]
+    url = config["url"]
+    dir = config["dir"]
+    # print(user_id,user_password,url,dir)
+
     # 创建文件夹
     if not os.path.exists(dir):
         os.mkdir(dir)
-    cookies = login()
+    cookies = login( url + "/login.php",user_id,user_password)
     # 在用户信息页获取已通过的题号
-    userinfo = download(url_userinfo, cookies)
+    userinfo = download(url + "/userinfo.php?user="+user_id, cookies)
     pids = re.findall(pattern_pid, userinfo)
-    procss_bar = ShowProcess(len(pids)+1)
+    procss_bar = ShowProcess(len(pids))
     print("您总共AC了"+str(len(pids))+"道题")
+    print("pid  sid")
     problemNum=0
     submitNum=0
     for pid in pids:
@@ -145,6 +142,7 @@ def main():
                     f.close()
                     # print("已下载第" + sid + "次提交")
                 time.sleep(interva_time)
+    procss_bar.close()
     print("下载完成,更新了"+str(problemNum)+"道新题,下载了"+str(submitNum)+"份代码")
 
 
