@@ -111,6 +111,8 @@ def main():
     pids = re.findall(pattern_pid, userinfo)
     procss_bar = ShowProcess(len(pids)+1)
     print("您总共AC了"+str(len(pids))+"道题")
+    problemNum=0
+    submitNum=0
     for pid in pids:
         procss_bar.show_process()
         # print("正在下载第" + pid + "题")
@@ -118,27 +120,32 @@ def main():
         url_status = url + "/status.php?user_id=" + user_id + "&problem_id=" + pid
         status = download(url_status, cookies)
         sids = re.findall(pattern_sid, status)
+        # 每个题目放在一个文件夹里
+        dir_save = dir + "/" + str(pid) + "/"
+        if not os.path.exists(dir_save):
+            os.mkdir(dir_save)
+            problemNum=problemNum+1
         for sid in sids:
+            filename = dir_save + "/" + sid + ".cpp"
+            if os.path.isfile(filename):
+                continue
+            print(pid+" "+sid)
             # 获取代码
             url_source = url + "/showsource.php?id=" + sid
             # url_source =  url+"/submitpage.php?id="+pid+"&sid="+sid
             source = download(url_source, cookies)
             source = re.findall(pattern_code,source,re.DOTALL)
             # print(code)
-            source=source[0]
-            source = htmlReplace(source)
-            # 每个题目放在一个文件夹里
-            dir_save = dir + "/" + str(pid) + "/"
-            if not os.path.exists(dir_save):
-                os.mkdir(dir_save)
-            # 保存
-            filename = dir_save + "/" + sid + ".cpp"
-            with codecs.open(filename, "w", "utf-8") as f:
-                f.write(source)
-                f.close()
-                # print("已下载第" + sid + "次提交")
-            time.sleep(interva_time)
-
+            for code in source:
+                submitNum = submitNum + 1
+                code = htmlReplace(code)
+                # 保存
+                with codecs.open(filename, "w", "utf-8") as f:
+                    f.write(code)
+                    f.close()
+                    # print("已下载第" + sid + "次提交")
+                time.sleep(interva_time)
+    print("下载完成,更新了"+str(problemNum)+"道新题,下载了"+str(submitNum)+"份代码")
 
 
 if __name__ == '__main__':
