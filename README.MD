@@ -4,6 +4,15 @@
 
 ## 使用方法
 
+### install
+
+``` bash
+sudo apt install python3 python3-dev python3-pip
+pip3 install requests
+```
+
+### run
+
 1. 在config.json文件中修改 账号、密码、OJ网址等信息
 2. 运行main.py
 
