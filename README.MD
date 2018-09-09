@@ -11,8 +11,14 @@ sudo apt install python3 python3-dev python3-pip
 pip3 install requests
 ```
 
-### run
+### 修改信息
 
-1. 在config.json文件中修改 账号、密码、OJ网址等信息
-2. 运行main.py
+在config.json文件中修改 账号、密码、OJ网址等信息
+
+
+### 运行
+
+``` bash
+python3 main.py
+```
 
