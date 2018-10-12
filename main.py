@@ -23,7 +23,7 @@ headers = {"Accept": "text/html,application/xhtml+xml,application/xml;",
 pattern_pid = "p\((\d+),\d\);"
 
 # 用于匹配提交记录
-pattern_sid = "<tr class='evenrow'><td>(\d+)</td>"
+pattern_sid = "<tr class='(even|odd)row'><td>(\d+)</td>"
 
 # 用于匹配代码
 pattern_codes = {'cpp': '<pre class="brush:c\+\+;">(.*)</pre>',
@@ -42,7 +42,6 @@ def save_file(root_dir,pid,sid,type,code):
     with codecs.open(file_path, "w", "utf-8") as f:
         f.write(code)
         f.close()
-
 
 def login(url,user_id,user_passworsd):
     res = requests.post(url+"/login.php", data={"user_id": user_id, "password": user_passworsd}, headers=headers)
@@ -65,7 +64,7 @@ def get_sids_by_uid_and_pid(url,user_name,pid,cookies):
     url_status = url + "/status.php?user_id=" + user_name + "&problem_id=" + pid
     status = download(url_status, cookies)
     sids = re.findall(pattern_sid, status)
-    return sids
+    return [ i[1] for i in sids]
 
 
 class HtmlReplace:
@@ -79,7 +78,7 @@ class HtmlReplace:
         ("&#039;","'")
     }
 
-    def htmlReplace(self,source):
+    def replace(self,source):
         for first,second in self.entities:
             source = source.replace(first,second)
         return source
