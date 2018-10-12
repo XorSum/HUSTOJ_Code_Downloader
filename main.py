@@ -61,21 +61,22 @@ def get_pids(url,user_id,cookies):
     pids = re.findall(pattern_pid, userinfo)
     return pids
 
-def get_sids_by_uid_and_pid(url,user_id,pid,cookies):
-    url_status = url + "/status.php?user_id=" + user_id + "&problem_id=" + pid
+def get_sids_by_uid_and_pid(url,user_name,pid,cookies):
+    url_status = url + "/status.php?user_id=" + user_name + "&problem_id=" + pid
     status = download(url_status, cookies)
     sids = re.findall(pattern_sid, status)
     return sids
 
 
 class HtmlReplace:
-    """ 用于替换html文档中的转移符"""
+    """ 用于替换html文档中的转义符"""
     entities = {
         ("&quot;",'"'),
         ("&apos;","'"),
         ("&amp;","&"),
         ("&lt;","<"),
         ("&gt;",">"),
+        ("&#039;","'")
     }
 
     def htmlReplace(self,source):
