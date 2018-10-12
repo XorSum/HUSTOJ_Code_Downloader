@@ -31,6 +31,22 @@ pattern_codes = {'cpp': '<pre class="brush:c\+\+;">(.*)</pre>',
                  'py': '<pre class="brush:python;">(.*)</pre>',
                  'c': '<pre class="brush:c;">(.*)</pre>'
                  }
+class HtmlReplace:
+    """ 用于替换html文档中的转义符"""
+    entities = {
+        ("&quot;",'"'),
+        ("&apos;","'"),
+        ("&amp;","&"),
+        ("&lt;","<"),
+        ("&gt;",">"),
+        ("&#039;","'")
+    }
+
+    def replace(self,source):
+        for first,second in self.entities:
+            source = source.replace(first,second)
+        return source
+
 
 def save_file(root_dir,pid,sid,type,code):
     if not os.path.exists(root_dir):
@@ -66,22 +82,20 @@ def get_sids_by_uid_and_pid(url,user_name,pid,cookies):
     sids = re.findall(pattern_sid, status)
     return [ i[1] for i in sids]
 
+def get_code_by_sid(url,sid,cookies):
+    ans = []
+    url_source = url + "/showsource.php?id=" + str(sid)
+    html_source = download(url_source,cookies)
+    for type in pattern_codes:
+        pattern = pattern_codes[type]
+        codes = re.findall(pattern, html_source, re.DOTALL)
+        for code in codes:
+            ans.append(code)
+    code = ans[0]
+    html_replace = HtmlReplace()
+    code = html_replace.replace(source=code)
+    return code
 
-class HtmlReplace:
-    """ 用于替换html文档中的转义符"""
-    entities = {
-        ("&quot;",'"'),
-        ("&apos;","'"),
-        ("&amp;","&"),
-        ("&lt;","<"),
-        ("&gt;",">"),
-        ("&#039;","'")
-    }
-
-    def replace(self,source):
-        for first,second in self.entities:
-            source = source.replace(first,second)
-        return source
 
 class User:
     user_id = ""
