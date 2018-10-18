@@ -8,6 +8,10 @@ import re
 import codecs
 import json
 
+requests.adapters.DEFAULT_RETRIES = 5 # 增加重连次数
+s = requests.session()
+s.keep_alive = False # 关闭多余连接
+
 # 每次下载的间隔时间0.1秒，这个时间间隔请根据具体情况灵活调整
 interva_time = 0.1
 
@@ -31,21 +35,20 @@ pattern_codes = {'cpp': '<pre class="brush:c\+\+;">(.*)</pre>',
                  'py': '<pre class="brush:python;">(.*)</pre>',
                  'c': '<pre class="brush:c;">(.*)</pre>'
                  }
-class HtmlReplace:
+
+def replace(source):
     """ 用于替换html文档中的转义符"""
     entities = {
-        ("&quot;",'"'),
-        ("&apos;","'"),
-        ("&amp;","&"),
-        ("&lt;","<"),
-        ("&gt;",">"),
-        ("&#039;","'")
+        ("&quot;", '"'),
+        ("&apos;", "'"),
+        ("&amp;", "&"),
+        ("&lt;", "<"),
+        ("&gt;", ">"),
+        ("&#039;", "'")
     }
-
-    def replace(self,source):
-        for first,second in self.entities:
-            source = source.replace(first,second)
-        return source
+    for first,second in entities:
+        source = source.replace(first,second)
+    return source
 
 
 def save_file(root_dir,pid,sid,type,code):
@@ -90,12 +93,13 @@ def get_code_by_sid(url,sid,cookies):
         pattern = pattern_codes[type]
         codes = re.findall(pattern, html_source, re.DOTALL)
         for code in codes:
-            ans.append(code)
-    code = ans[0]
-    html_replace = HtmlReplace()
-    code = html_replace.replace(source=code)
-    return code
-
+            if re.search("Result: 正确",code)!=None:
+                code = replace(code)
+                ans.append((code,type))
+    if len(ans)>0:
+        return ans[0]
+    else:
+        return None
 
 class User:
     user_id = ""
@@ -125,58 +129,18 @@ def read_user_config(file_name):
 
 
 def main():
-    pass
-    # # 读取配置
-    # user=User()
-    # user.read("config.json")
-    #
-    # print(user.user_id,user.user_password,user.url,user.dir)
-    #
-    # # 创建文件夹
-    # if not os.path.exists(user.dir):
-    #     os.mkdir(user.dir)
-    # cookies = login( user.url + "/login.php",user.user_id,user.user_password)
-    # # 在用户信息页获取已通过的题号
-    # userinfo = download(user.url + "/userinfo.php?user="+user.user_id, cookies)
-    # pids = re.findall(pattern_pid, userinfo)
-    # print("您总共AC了"+str(len(pids))+"道题")
-    # print("pid  sid")
-    # problemNum=0
-    # submitNum=0
-    #
-    # for pid in pids:
-    #     # print("正在下载第" + pid + "题")
-    #     # 获取提交记录
-    #     url_status = user.url + "/status.php?user_id=" + user.user_id + "&problem_id=" + pid
-    #     status = download(url_status, cookies)
-    #     sids = re.findall(pattern_sid, status)
-    #     # 每个题目放在一个文件夹里
-    #     dir_save = user.dir + "/" + str(pid) + "/"
-    #     if not os.path.exists(dir_save):
-    #         os.mkdir(dir_save)
-    #         problemNum=problemNum+1
-    #     for sid in sids:
-    #         print(pid+" "+sid)
-    #         url_source = user.url + "/showsource.php?id=" + sid
-    #         # url_source =  url+"/submitpage.php?id="+pid+"&sid="+sid
-    #         source = download(url_source, cookies)
-    #
-    #             filename = dir_save + "/" + sid + ".cpp"
-    #             if os.path.isfile(filename):
-    #                 continue
-    #             source = re.findall(pattern_code,source,re.DOTALL)
-    #         # print(code)
-    #         for code in source:
-    #             submitNum = submitNum + 1
-    #             code = HtmlReplace.Replace(code)
-    #             # 保存
-    #             with codecs.open(filename, "w", "utf-8") as f:
-    #                 f.write(code)
-    #                 f.close()
-    #                 # print("已下载第" + sid + "次提交")
-    #             time.sleep(interva_time)
-    # print("下载完成,更新了"+str(problemNum)+"道新题,下载了"+str(submitNum)+"份代码")
-
-
+    users = read_user_config("./config.json")
+    for user in users:
+        cookies = login(user.url,user.user_id,user.user_password)
+        pids = get_pids(user.url,user.user_id,cookies)
+        for pid in pids:
+            sids = get_sids_by_uid_and_pid(user.url,user.user_id,pid,cookies)
+            for sid in sids:
+                code = get_code_by_sid(user.url,sid,cookies)
+                if code!=None:
+                    save_file(user.dir,pid,sid,code[1],code[0])
+                    print("saved",pid,sid)
+                time.sleep(interva_time)
+        logout(user.url,cookies)
 if __name__ == '__main__':
     main()

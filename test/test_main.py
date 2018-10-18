@@ -1,8 +1,9 @@
 from unittest import TestCase
 from main import *
 
+
 class TestMain(TestCase):
-    url = "http://exam.upc.edu.cn/"
+    url = "http://exam.upc.edu.cn"
     user_name = "WC011"
     user_password = "cprimer"
 
@@ -20,19 +21,19 @@ class TestMain(TestCase):
         for user in users:
             print(user)
 
-    def testDownLoad(self):
+    def test_download(self):
         cookies = login(self.url, self.user_name, self.user_password)
         page = download(self.url+"/running.php",cookies)
         print(page)
         logout(self.url, cookies)
 
-    def testGetPid(self):
+    def test_get_pid(self):
         cookies = login(self.url, self.user_name, self.user_password)
         pids = get_pids(self.url,self.user_name, cookies)
         print(pids)
         logout(self.url, cookies)
 
-    def testget_sids_by_uid_and_pid(self):
+    def test_get_sids_by_uid_and_pid(self):
         cookies = login(self.url, self.user_name, self.user_password)
         sids = get_sids_by_uid_and_pid(self.url,self.user_name,"9458",cookies)
         print(sids)
