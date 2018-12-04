@@ -1,21 +1,9 @@
 {
   "user": [
     {
-      "user_id": "user_name",
-      "user_passworsd": "user_password",
-      "url": "http://example.com/",
-      "dir": "./code/"
-    },
-    {
-      "user_id": "user_name",
-      "user_passworsd": "user_password",
-      "url": "http://example.com/",
-      "dir": "./code/"
-    },
-    {
-      "user_id": "user_name",
-      "user_passworsd": "user_password",
-      "url": "http://example.com/",
+      "user_id": "WC011",
+      "user_passworsd": "cprimer",
+      "url": "http://icpc.upc.edu.cn/",
       "dir": "./code/"
     }
   ]
