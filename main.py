@@ -1,5 +1,5 @@
 # @author han777404
-
+import sqlite3
 import sys
 import os
 import threading
@@ -44,6 +44,31 @@ def result_convert(num):
     }
     return con[num]
 
+def create_table():
+    conn = sqlite3.connect('test.db')
+    c = conn.cursor()
+    c.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='sids';")
+    table_num = c.fetchone()[0]
+    if table_num < 1:
+        c.execute(''' create table sids (
+                 sid int primary key not null ,
+                 pid int not null ,
+                 result char(20) not null ,
+                 memory int not null ,
+                 time int not null ,
+                 language char(20) not null ,
+                 length int not null ,
+                 date_time datetime  not null 
+              );''')
+    #     print("create table")
+    # else:
+    #     print("already have")
+    c.close()
+    conn.commit()
+    conn.close()
+
+
+
 
 def get_sids(url, user_id, cookies):
     top_sid = "-1"
@@ -51,7 +76,8 @@ def get_sids(url, user_id, cookies):
     flag2 = True
 
     while flag1:
-
+        conn = sqlite3.connect('test.db')
+        cursor = conn.cursor()
         page = requests.get(url=url + "/status.php?user_id=" + user_id + "&top=" + top_sid,
                             cookies=cookies, headers=headers)
         soup = BeautifulSoup(page.content, 'lxml')
@@ -67,11 +93,12 @@ def get_sids(url, user_id, cookies):
             content["language"] = lst[6].find('a').string
             content["length"] = lst[7].string[0:-2]
             content["datetime"] = lst[8].string
+            # content["datetime"] = time.mktime(time.strptime(lst[8].string, "%Y-%m-%d %H:%M:%S"))
             sids.append(content)
             print(content)
             print()
 
-        if len(sids) > 1:
+        if len(sids) > 0:
             if flag2:
                 flag2 = False
             else:
@@ -79,19 +106,27 @@ def get_sids(url, user_id, cookies):
         if len(sids) > 0:
             for content in sids:
                 sid_queue.put(content)
-
+                cursor.execute("insert into sids values (?,?,?,?,?,?,?,?)",
+                               (content["sid"],content["pid"],content["result"],content["memory"],content["time"],content["language"],content["length"],content["datetime"]) )
             top_sid = sids[-1]["sid"]
         else:
             flag1 = False
-
+        cursor.close()
+        conn.commit()
+        conn.close()
 
 def main():
+
+    create_table()
+
     users = read_user_config("./config.json")
     for user in users:
         cookies = login(user.url, user.user_id, user.user_password)
         print("cookies=", cookies)
         get_sids(user.url, user.user_id, cookies)
         logout(user.url, cookies)
+
+
 
 
 if __name__ == '__main__':
