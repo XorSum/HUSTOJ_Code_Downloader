@@ -25,9 +25,10 @@ threadLock = threading.Lock()
 
 sid_queue = queue.Queue()
 
+
 def result_convert(num):
     con = {
-        "-1":"All",
+        "-1": "All",
         "0": "waiting",
         "1": "rejudging",
         "2": "compiling",
@@ -44,17 +45,16 @@ def result_convert(num):
     return con[num]
 
 
-
 def get_sids(url, user_id, cookies):
-
     top_sid = "-1"
     flag1 = True
     flag2 = True
 
     while flag1:
 
-        first_page = requests.get(url=url + "/status.php?user_id=" + user_id +"&top=" + top_sid , cookies=cookies, headers=headers)
-        soup = BeautifulSoup(first_page.content, 'lxml')
+        page = requests.get(url=url + "/status.php?user_id=" + user_id + "&top=" + top_sid,
+                            cookies=cookies, headers=headers)
+        soup = BeautifulSoup(page.content, 'lxml')
         sids = []
         for trr in soup.find_all('tr', class_={"evenrow", "oddrow"}):
             lst = trr.find_all('td')
@@ -71,19 +71,18 @@ def get_sids(url, user_id, cookies):
             print(content)
             print()
 
-        if flag2 :
-            if len(sids) > 0 :
-                sid_queue.put(sids[0])
-                sids.remove(sids[0])
+        if len(sids) > 1:
+            if flag2:
                 flag2 = False
+            else:
+                sids.remove(sids[0])
         if len(sids) > 0:
             for content in sids:
                 sid_queue.put(content)
+
             top_sid = sids[-1]["sid"]
         else:
             flag1 = False
-
-
 
 
 def main():
