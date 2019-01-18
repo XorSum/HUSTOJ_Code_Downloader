@@ -2,7 +2,7 @@
   "user": [
     {
       "user_id": "WC011",
-      "user_passworsd": "cprimer",
+      "user_passworsd": "******",
       "url": "http://icpc.upc.edu.cn/",
       "dir": "./code/"
     }
