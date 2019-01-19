@@ -1,8 +1,8 @@
 {
   "user": [
     {
-      "user_id": "user_id",
-      "user_passworsd": "user_password",
+      "user_id": "your_user_id",
+      "user_passworsd": "your_user_password",
       "url": "http://icpc.upc.edu.cn/",
       "dir": "./code/"
     }
