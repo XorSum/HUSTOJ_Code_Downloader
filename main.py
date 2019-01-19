@@ -112,7 +112,7 @@ class Customer(threading.Thread):
     def run(self):
         while True:
             try:
-                submit = self.submit_queue.get(block=False)
+                submit = self.submit_queue.get(block=True,timeout=1)
                 code = self.get_code(submit)
                 self.save_code(submit, code)
             except Exception as e:
@@ -171,10 +171,9 @@ def main():
         for customer in customers:
             customer.join()
 
-
-
         logout(user.url, cookies)
 
+    print("download complete")
 
 if __name__ == '__main__':
     main()
