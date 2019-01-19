@@ -86,7 +86,7 @@ def get_sids(url, user_id, cookies):
     while flag1:
         
         cursor = conn.cursor()
-        page = requests.get(url=url + "/status.php?top=" + top_sid,
+        page = requests.get(url=url + "/status.php?user_id="+ user_id+"&top=" + top_sid,
                             cookies=cookies, headers=headers)
         soup = BeautifulSoup(page.content, 'lxml')
         sids = []
