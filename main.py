@@ -13,33 +13,10 @@ import queue
 from bs4 import BeautifulSoup
 
 from user import read_user_config
-from utils import login, logout, save_file, headers
-
-requests.adapters.DEFAULT_RETRIES = 5  # 增加重连次数
-s = requests.session()
-s.keep_alive = False  # 关闭多余连接
-
-# 每次下载的间隔时间0.1秒，这个时间间隔请根据具体情况灵活调整
-interva_time = 0.1
+import utils
 
 
-def result_convert(num):
-    con = {
-        "-1": "All",
-        "0": "waiting",
-        "1": "rejudging",
-        "2": "compiling",
-        "3": "running",
-        "4": "AC",
-        "5": "PE",
-        "6": "WA",
-        "7": "TLE",
-        "8": "MLE",
-        "9": "OLE",
-        "10": "RE",
-        "11": "CE"
-    }
-    return con[num]
+
 
 
 class Producer(threading.Thread):
@@ -58,7 +35,7 @@ class Producer(threading.Thread):
         isFirstPage = True
         while isEnd == False:
             page = requests.get(url=self.url + "/status.php", params={"user_id": self.user_id, "top": top_sid},
-                                cookies=self.cookies, headers=headers)
+                                cookies=self.cookies, headers=utils.headers)
             soup = BeautifulSoup(page.content, 'lxml')
             submits = []
             for row in soup.find_all('tr', class_={"evenrow", "oddrow"}):
@@ -67,7 +44,7 @@ class Producer(threading.Thread):
                 submit["sid"] = cols[0].string
                 submit["uid"] = cols[1].find('a').string
                 submit["pid"] = cols[2].find('div').find('a').string
-                submit["result"] = result_convert(cols[3].find('span')['result'])
+                submit["result"] = utils.result_convert(cols[3].find('span')['result'])
                 if cols[4].find('div') == None:
                     submit["memory"] = "?"
                     submit["time"] = "?"
@@ -122,7 +99,7 @@ class Customer(threading.Thread):
 
     def get_code(self, submit):
         print("customer", submit)
-        page = requests.get(url=self.url + "/showsource.php?id=" + submit["sid"], cookies=self.cookies, headers=headers)
+        page = requests.get(url=self.url + "/showsource.php?id=" + submit["sid"], cookies=self.cookies, headers=utils.headers)
         soup = BeautifulSoup(page.content, 'lxml')
         if soup.find('pre') == None:
             code = ""
@@ -152,9 +129,12 @@ class Customer(threading.Thread):
 
 
 def main():
+    requests.adapters.DEFAULT_RETRIES = 5  # 增加重连次数
+    s = requests.session()
+    s.keep_alive = False  # 关闭多余连接
     users = read_user_config("./config.json")
     for user in users:
-        cookies = login(user.url, user.user_id, user.user_password)
+        cookies = utils.login(user.url, user.user_id, user.user_password)
         print("cookies=", cookies)
 
         submit_queue = queue.Queue()
@@ -171,7 +151,7 @@ def main():
         for customer in customers:
             customer.join()
 
-        logout(user.url, cookies)
+        utils.logout(user.url, cookies)
 
     print("download complete")
 
