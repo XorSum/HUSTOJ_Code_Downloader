@@ -1,22 +1,14 @@
-# @author han777404
-import sqlite3
-import sys
 import os
 import threading
 import time
 import requests
-import re
 import codecs
-import json
 import queue
 
 from bs4 import BeautifulSoup
 
 from user import read_user_config
 import utils
-
-
-
 
 
 class Producer(threading.Thread):
@@ -60,6 +52,7 @@ class Producer(threading.Thread):
                     submit["length"] = cols[7].string[0:-2]
                 submit["submit_time"] = cols[8].string
                 submits.append(submit)
+
             if len(submits) > 0:  # 如果不是首页，则需要去除重复的第一项
                 if isFirstPage == True:
                     isFirstPage = False
@@ -69,9 +62,10 @@ class Producer(threading.Thread):
             if len(submits) > 0:
                 for submit in submits:
                     self.submit_queue.put(submit)
-                    print("producer", submit)
+                    # print("producer", submit)
                 top_sid = submits[-1]["sid"]
             else:  # 没爬到数据，则结束
+                self.submit_queue.put("produceDone") # 队列中置入毒丸
                 isEnd = True
             # time.sleep(interva_time)
 
@@ -90,15 +84,19 @@ class Customer(threading.Thread):
         while True:
             try:
                 submit = self.submit_queue.get(block=True,timeout=1)
-                code = self.get_code(submit)
-                self.save_code(submit, code)
+                if submit == "produceDone":
+                    self.submit_queue.put("produceDone")
+                    break
+                    # 取到毒丸则向队列中置入毒丸并结束
+                else :
+                    code = self.get_code(submit)
+                    self.save_code(submit, code)
+                    print(submit)
             except Exception as e:
-                # print(repr(e))
-                break
+                print(repr(e))
             # time.sleep(interva_time)
 
     def get_code(self, submit):
-        print("customer", submit)
         page = requests.get(url=self.url + "/showsource.php?id=" + submit["sid"], cookies=self.cookies, headers=utils.headers)
         soup = BeautifulSoup(page.content, 'lxml')
         if soup.find('pre') == None:
@@ -136,23 +134,16 @@ def main():
     for user in users:
         cookies = utils.login(user.url, user.user_id, user.user_password)
         print("cookies=", cookies)
-
         submit_queue = queue.Queue()
-
         producer = Producer(submit_queue, user.url, user.user_id, cookies)
-
         time.sleep(0.3)
-
         customers = []
         for i in range(10):
             customers.append( Customer(submit_queue, user.url, user.dir, cookies) )
-
         producer.join()
         for customer in customers:
             customer.join()
-
         utils.logout(user.url, cookies)
-
     print("download complete")
 
 if __name__ == '__main__':
